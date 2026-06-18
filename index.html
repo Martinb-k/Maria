@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mission: Maria's Birthday 🔑</title>
+    <style>
+        :root {
+            --neon-blue: #45f3ff;
+            --bg-dark: #0b0c10;
+            --panel-bg: rgba(31, 40, 51, 0.95);
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: #66fcf1;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        .game-container {
+            background: var(--panel-bg);
+            border: 2px solid var(--neon-blue);
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 0 25px var(--neon-blue);
+            max-width: 500px;
+            width: 90%;
+            min-height: 350px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+        h2 {
+            color: #fff;
+            text-shadow: 0 0 10px var(--neon-blue);
+            margin-top: 0;
+        }
+        .door-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .door-btn {
+            background: #1f2833;
+            border: 2px solid #c5c6c7;
+            color: #fff;
+            padding: 20px 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .door-btn.active {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue);
+            color: var(--neon-blue);
+        }
+        .door-btn.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            border-color: #333;
+        }
+        .content-area {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            min-height: 100px;
+        }
+        .action-btn {
+            background: transparent;
+            border: 2px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+            text-transform: uppercase;
+            box-shadow: 0 0 5px var(--neon-blue);
+        }
+        /* Finale Animations */
+        .cake-stage {
+            display: none;
+            position: relative;
+            height: 200px;
+            margin-top: 20px;
+        }
+        .cake-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 40px);
+            gap: 5px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .slice {
+            font-size: 2rem;
+            opacity: 0;
+            transform: scale(0.5) translateY(-50px);
+        }
+        .arrange-anim {
+            animation: arrangeIn 1.5s forwards ease-out;
+        }
+        @keyframes arrangeIn {
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .knife-hand {
+            position: absolute;
+            font-size: 3rem;
+            left: 50%;
+            top: -20px;
+            transform: translateX(-50%) rotate(0deg);
+            opacity: 0;
+            z-index: 5;
+        }
+        .cut-anim {
+            animation: knifeCut 2s forwards ease-in-out;
+        }
+        @keyframes knifeCut {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-20px) rotate(0deg); }
+            30% { opacity: 1; transform: translateX(-50%) translateY(20px) rotate(-20deg); }
+            60% { transform: translateX(-50%) translateY(40px) rotate(10deg); }
+            100% { opacity: 1; transform: translateX(-50%) translateY(35px) rotate(0deg); }
+        }
+        .balloon {
+            position: absolute;
+            bottom: -100px;
+            font-size: 2.5rem;
+            animation: floatUp 6s linear infinite;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-110vh); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container" id="gameContainer">
+        <h2 id="titleHandler">[ SYSTEM INITIALIZED: 6 DOORS ]</h2>
+        <div class="content-area" id="contentHandler">
+            <p>[!] Security Override Required.</p>
+            <p>Maria, you have 6 encrypted vault doors to unlock. Each holds a specific database layer.</p>
+            <p>Click below to begin the decryption protocols.</p>
+        </div>
+        
+        <div id="btnContainer">
+            <button class="action-btn" onclick="startGame()">Initialize Decryption</button>
+        </div>
+
+        <div class="door-grid" id="doorGrid" style="display: none;">
+            <button class="door-btn disabled" id="d1">1</button>
+            <button class="door-btn disabled" id="d2">2</button>
+            <button class="door-btn disabled" id="d3">3</button>
+            <button class="door-btn disabled" id="d4">4</button>
+            <button class="door-btn disabled" id="d5">5</button>
+            <button class="door-btn disabled" id="d6">6</button>
+        </div>
+
+        <div class="cake-stage" id="cakeStage">
+            <div class="knife-hand" id="knifeHand">🔪</div>
+            <div class="cake-grid" id="cakeGrid">
+                <div class="slice" id="s1">🍰</div>
+                <div class="slice" id="s2">🍰</div>
+                <div class="slice" id="s3">🍰</div>
+                <div class="slice" id="s4">🍰</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentDoor = 1;
+        const totalDoors = 6;
+
+        const doorData = {
+            1: {
+                title: "DOOR 1: LOG IN LOGS",
+                text: "<b>System Note:</b> They say wisdom comes with age... but looking at your logs, it looks like you just found an excuse to sleep past your alarms. 😉",
+                btnText: "Bypass to Door 2"
+            },
+            2: {
+                title: "DOOR 2: CORE PROTOCOLS",
+                text: "<b>System Prompt:</b> Make a wish right now. Seriously, close your eyes and think of it... Access granted. Proceeding to securely encrypt your wish.",
+                btnText: "Lock Wish & Open Door 3"
+            },
+            3: {
+                title: "DOOR 3: CHALLENGE MATRIX",
+                text: "<b>Mini Game:</b> Quick! What's faster? A supercomputer executing code, or you choosing what outfit to wear? (Hint: The machine wins every time). 😂",
+                btnText: "Accept Defeat & Open Door 4"
+            },
+            4: {
+                title: "DOOR 4: REVELATION LAYER",
+                text: "<b>Data Found:</b> Even though we only met three days ago, my terminal algorithms predicted that missing your birthday launch sequence wasn't an option.",
+                btnText: "Decrypt Door 5"
+            },
+            5: {
+                title: "DOOR 5: MEMORY ALLOCATION",
+                text: "<b>Status:</b> Almost through the firewalls. The final door is loading a highly unstable payload of celebration material. Brace yourself.",
+                btnText: "UNLOCK FINAL TERMINAL"
+            },
+            6: {
+                title: "DOOR 6: CRITICAL OVERLOAD",
+                text: "All firewalls cleared. Initializing final birthday compilation script now...",
+                btnText: "EXECUTE FINALE 🚀"
+            }
+        };
+
+        function startGame() {
+            document.getElementById('btnContainer').innerHTML = `<button class="action-btn" id="nextAction" onclick="advanceDoor()">Open Door 1</button>`;
+            document.getElementById('doorGrid').style.display = 'grid';
+            updateDoorDisplay();
+        }
+
+        function updateDoorDisplay() {
+            for (let i = 1; i <= totalDoors; i++) {
+                let btn = document.getElementById(`d${i}`);
+                btn.className = "door-btn disabled";
+                if (i === currentDoor) {
+                    btn.className = "door-btn active";
+                }
+            }
+        }
+
+        function advanceDoor() {
+            if (currentDoor <= totalDoors) {
+                let data = doorData[currentDoor];
+                document.getElementById('titleHandler').innerText = data.title;
+                document.getElementById('contentHandler').innerHTML = `<p>${data.text}</p>`;
+                
+                if (currentDoor === totalDoors) {
+                    document.getElementById('btnContainer').innerHTML = `<button class="action-btn" onclick="triggerFinale()">${data.btnText}</button>`;
+                } else {
+                    document.getElementById('btnContainer').innerHTML = `<button class="action-btn" onclick="advanceDoor()"> ${data.btnText}</button>`;
+                }
+                currentDoor++;
+                updateDoorDisplay();
+            }
+        }
+
+        function triggerFinale() {
+            document.getElementById('doorGrid').style.display = 'none';
+            document.getElementById('btnContainer').style.display = 'none';
+            document.getElementById('titleHandler').innerText = "⚠️ SYSTEM OVERRIDE SUCCESSFUL!";
+            document.getElementById('contentHandler').innerHTML = "<p>Assembling birthday array structure...</p>";
+            
+            // Step 1: Pop up continuous balloons
+            setInterval(createBalloon, 300);
+
+            // Step 2: Slices arranging themselves
+            document.getElementById('cakeStage').style.display = 'block';
+            setTimeout(() => { document.getElementById('s1').classList.add('arrange-anim'); }, 400);
+            setTimeout(() => { document.getElementById('s2').classList.add('arrange-anim'); }, 800);
+            setTimeout(() => { document.getElementById('s3').classList.add('arrange-anim'); }, 1200);
+            setTimeout(() => { 
+                document.getElementById('s4').classList.add('arrange-anim');
+                document.getElementById('contentHandler').innerHTML = "<p>Cake structural alignment complete. Executing cut syntax...</p>";
+            }, 1600);
+
+            // Step 3: Hand cuts the cake
+            setTimeout(() => {
+                document.getElementById('knifeHand').classList.add('cut-anim');
+            }, 3000);
+
+            // Step 4: Final message banner
+            setTimeout(() => {
+                document.getElementById('contentHandler').innerHTML = `
+                    <h1 style="color:#fff; text-shadow:0 0 15px var(--neon-blue); animation: arrangeIn 1s ease;">✨ HAPPY BIRTHDAY MARIA! ✨</h1>
+                    <p style="color:#45f3ff; font-weight:bold;">Mission complete. Have an amazing day! 🎂🎉</p>
+                `;
+            }, 4500);
+        }
+
+        function createBalloon() {
+            const symbols = ['🎈', '🎉', '✨', '🥳'];
+            const balloon = document.createElement('div');
+            balloon.className = 'balloon';
+            balloon.innerText = symbols[Math.floor(Math.random() * symbols.length)];
+            balloon.style.left = Math.random() * 100 + 'vw';
+            balloon.style.animationDuration = (Math.random() * 3 + 4) + 's';
+            document.body.appendChild(balloon);
+            setTimeout(() => { balloon.remove(); }, 6000);
+        }
+    </script>
+</body>
+</html>
+
